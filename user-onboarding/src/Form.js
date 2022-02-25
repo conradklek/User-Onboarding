@@ -103,7 +103,9 @@ function Form() {
         Do you agree to the terms and conditions?
         <input id="termsInput" type="checkbox" name="terms" />
       </label>
-      <button onClick={formSubmit}>Submit!</button>
+      <button id="submit" onClick={formSubmit}>
+        Submit!
+      </button>
     </form>
   );
 }
