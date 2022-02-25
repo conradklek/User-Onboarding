@@ -3,121 +3,107 @@ import axios from "axios";
 import * as Yup from "yup";
 
 function Form() {
-  const [users, setUsers] = useState([]);
+  const [post, setPost] = useState([]);
 
-  const [formValues, setFormValues] = useState({
+  const [formState, setFormState] = useState({
     name: "",
     email: "",
+    website: "",
     password: "",
-    terms: false,
   });
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState({
+    email: "",
+    password: "",
+    terms: "",
+  });
 
   const formSchema = Yup.object().shape({
     name: Yup.string()
-      .min(2, "Name must be at least 2 characters")
-      .required("Name is required"),
+      .required("Name is required")
+      .min(2, "Name must be at least 2 characters"),
     email: Yup.string()
-      .email("Must be a valid email")
-      .required("Email is required"),
+      .email("Must be a valid email address.")
+      .required("Must include email address."),
     password: Yup.string()
-      .min(8, "Password must be at least 8 characters")
-      .required("Password is required"),
-    terms: Yup.boolean()
-      .oneOf([true], "You must agree to the terms")
-      .required("You must agree to the terms"),
+      .required("Password is Required")
+      .min(6, "Passwords must be at least 6 characters long."),
+    terms: Yup.boolean().oneOf([true], "You must accept Terms and Conditions"),
   });
 
-  const handleChange = (e) => {
-    e.persist();
-    setFormValues({
-      ...formValues,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleCheckbox = (e) => {
-    e.persist();
-    setFormValues({
-      ...formValues,
-      [e.target.name]: e.target.checked,
-    });
-  };
-
-  const handleBlur = (e) => {
-    e.persist();
-    setErrors({
-      ...errors,
-      [e.target.name]: "",
-    });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    axios
-      .post("https://reqres.in/api/users", formValues)
-      .then((response) => {
-        console.log(response);
-        setUsers([...users, response.data]);
+  const inputChange = (e) => {
+    const { name, value } = e.target;
+    Yup.reach(formSchema, name)
+      .validate(value)
+      .then((valid) => {
+        setErrors({
+          ...errors,
+          [name]: "",
+        });
       })
-      .catch((error) => {
-        console.log(error);
+      .catch((err) => {
+        setErrors({
+          ...errors,
+          [name]: err.errors[0],
+        });
       });
+    setFormState({
+      ...formState,
+      [name]: value,
+    });
   };
 
+  const formSubmit = (e) => {
+    e.preventDefault();
+    console.log("submitted!");
+    axios
+      .post("https://reqres.in/api/users", formState)
+      .then((res) => {
+        setPost(res.data); // get just the form data from the REST api
+        console.log("success", res);
+      })
+      .catch((err) => console.log(err.response));
+  };
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label htmlFor="name">Name</label>
+    <form>
+      <label htmlFor="nameInput">
+        Name
         <input
+          id="nameInput"
           type="text"
           name="name"
-          id="name"
-          value={formValues.name}
-          onChange={handleChange}
-          onBlur={handleBlur}
+          placeholder="Name"
+          onChange={inputChange}
         />
-        {errors.name && <p>{errors.name}</p>}
-      </div>
-      <div>
-        <label htmlFor="email">Email</label>
+      </label>
+      {errors.email.length > 0 && <p className="error">{errors.email}</p>}
+      <label htmlFor="emailInput">
+        Email
         <input
+          id="emailInput"
           type="email"
           name="email"
-          id="email"
-          value={formValues.email}
-          onChange={handleChange}
-          onBlur={handleBlur}
+          placeholder="Email"
+          onChange={inputChange}
         />
-        {errors.email && <p>{errors.email}</p>}
-      </div>
-      <div>
-        <label htmlFor="password">Password</label>
+      </label>
+      {errors.email.length > 0 && <p className="error">{errors.email}</p>}
+      <label htmlFor="passwordInput">
+        Password
         <input
+          id="passwordInput"
           type="password"
           name="password"
-          id="password"
-          value={formValues.password}
-          onChange={handleChange}
-          onBlur={handleBlur}
+          placeholder="Password"
+          onChange={inputChange}
         />
-        {errors.password && <p>{errors.password}</p>}
-      </div>
-      <div>
-        <label htmlFor="terms">
-          <input
-            type="checkbox"
-            name="terms"
-            id="terms"
-            checked={formValues.terms}
-            onChange={handleCheckbox}
-          />
-          I agree to the terms
-        </label>
-        {errors.terms && <p>{errors.terms}</p>}
-      </div>
-      <button type="submit">Submit</button>
+      </label>
+      {errors.password.length > 0 && <p className="error">{errors.password}</p>}
+      <label htmlFor="termsInput">
+        Do you agree to the terms and conditions?
+        <input id="termsInput" type="checkbox" name="terms" />
+      </label>
+      <button onClick={formSubmit}>Submit!</button>
     </form>
   );
 }
